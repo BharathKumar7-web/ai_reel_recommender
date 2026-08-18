@@ -283,7 +283,7 @@ with tabs[1]:
         </div>
         """, unsafe_allow_html=True)
 
-        # Embedded Video Player (Serves generated 20s MP4 video directly from disk)
+        # Embedded Video Player (Serves 30s MP4 video directly from disk)
         local_video_path = os.path.join(CURRENT_DIR, "videos", f"{active_reel['reel_id']}.mp4")
         if os.path.exists(local_video_path):
             with open(local_video_path, "rb") as vf:
@@ -291,6 +291,13 @@ with tabs[1]:
         else:
             video_url = active_reel.get("video_url") or "https://assets.mixkit.co/videos/preview/mixkit-software-developer-working-on-code-42358-large.mp4"
             st.video(video_url)
+
+        # Audible Voiceover Track (Spoken Audio Narration)
+        local_audio_path = os.path.join(CURRENT_DIR, "videos", f"{active_reel['reel_id']}.wav")
+        if os.path.exists(local_audio_path):
+            st.markdown("🔊 **Audible Voiceover Narration:**")
+            with open(local_audio_path, "rb") as af:
+                st.audio(af.read(), format="audio/wav", autoplay=False)
 
         # Subtitles & Transcript Box
         with st.expander("📝 Live Audio Transcript / Subtitles", expanded=True):
