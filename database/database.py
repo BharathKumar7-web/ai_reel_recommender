@@ -49,6 +49,7 @@ class Database:
                     difficulty TEXT,
                     content_type TEXT,
                     quality_score REAL,
+                    video_url TEXT,
                     tags TEXT
                 )
             """)
@@ -156,7 +157,7 @@ class Database:
                         for u in users:
                             cursor.execute(
                                 "INSERT OR IGNORE INTO users (user_id, persona, personalization_enabled, created_at) VALUES (?, ?, ?, ?)",
-                                (u["user_id"], u["persona"], int(u.get("personalization_enabled", True)), u.get("created_at", datetime.utcnow().isoformat()))
+                                (u["user_id"], u["persona"], int(u.get("personalization_enabled", True)), u.get("created_at", datetime.now().isoformat()))
                             )
                             cursor.execute(
                                 "INSERT OR IGNORE INTO privacy_settings (user_id, consent_given, personalization_enabled) VALUES (?, 1, ?)",
@@ -166,21 +167,19 @@ class Database:
             # Seed Reels
             reels_file = os.path.join(data_dir, "reels.json")
             if os.path.exists(reels_file):
-                cursor.execute("SELECT COUNT(*) as count FROM reels")
-                if cursor.fetchone()["count"] == 0:
-                    with open(reels_file, "r", encoding="utf-8") as f:
-                        reels = json.load(f)
-                        for r in reels:
-                            cursor.execute("""
-                                INSERT OR REPLACE INTO reels 
-                                (reel_id, title, caption, transcript, description, category, topic, difficulty, content_type, quality_score, tags)
-                                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-                            """, (
-                                r["reel_id"], r["title"], r.get("caption", ""), r.get("transcript", ""),
-                                r.get("description", ""), r.get("category", "Other"), r.get("topic", ""),
-                                r.get("difficulty", "Beginner"), r.get("content_type", ""),
-                                float(r.get("quality_score", 0.8)), json.dumps(r.get("tags", []))
-                            ))
+                with open(reels_file, "r", encoding="utf-8") as f:
+                    reels = json.load(f)
+                    for r in reels:
+                        cursor.execute("""
+                            INSERT OR REPLACE INTO reels 
+                            (reel_id, title, caption, transcript, description, category, topic, difficulty, content_type, quality_score, video_url, tags)
+                            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                        """, (
+                            r["reel_id"], r["title"], r.get("caption", ""), r.get("transcript", ""),
+                            r.get("description", ""), r.get("category", "Other"), r.get("topic", ""),
+                            r.get("difficulty", "Beginner"), r.get("content_type", ""),
+                            float(r.get("quality_score", 0.8)), r.get("video_url", ""), json.dumps(r.get("tags", []))
+                        ))
 
             # Seed Recommendations
             recs_file = os.path.join(data_dir, "recommendations.json")

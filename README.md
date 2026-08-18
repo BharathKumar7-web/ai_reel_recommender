@@ -148,5 +148,39 @@ streamlit run app.py
 **Q: What happens if an external LLM API goes down or the user is offline?**  
 > *A: The system implements an offline-first dual-mode NLP architecture. If Sentence Transformers or external APIs are unavailable, it seamlessly falls back to a deterministic TF-IDF semantic engine with zero downtime or crashes.*
 
+## 📦 Deployment to GitHub
+
+Follow these steps to push this project to GitHub and enable CI via GitHub Actions.
+
+1. Create a new GitHub repository (on GitHub.com) named `ai_reel_recommender`.
+
+2. Initialize git, add remote, commit, and push:
+
+```bash
+cd C:\Users\user\OneDrive\Desktop\ai_reel_recommender
+git init
+git add .
+git commit -m "Initial commit"
+git branch -M main
+git remote add origin git@github.com:YOUR_GITHUB_USERNAME/ai_reel_recommender.git
+git push -u origin main
+```
+
+3. GitHub Actions will run automatically on push. Check the Actions tab on GitHub to view CI runs.
+
+4. To run tests locally (same as CI):
+
+```bash
+python -m pip install --upgrade pip
+pip install -r requirements.txt
+pytest -v
+```
+
+5. To disable or modify CI, edit or remove `.github/workflows/python-ci.yml`.
+
+6. If you want to deploy a web app (Streamlit) to GitHub Pages or other hosting, consider using GitHub Pages with `streamlit-static` or deploy to Render/Heroku/Vercel following their Python app guides.
+
+If you'd like, I can add a GitHub Actions secret guidance or create a release workflow.
+
 **Q: How do you prevent sensational AI clickbait from polluting educational feeds?**  
 > *A: The Quality & Anti-Hype Filter inspects content for exaggerated claims (e.g. 'earn $10k/day', 'replace coders in 24 hours') and applies a severe hype penalty to demote clickbait in the ranking formula.*

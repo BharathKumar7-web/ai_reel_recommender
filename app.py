@@ -231,39 +231,118 @@ with tabs[0]:
         """, unsafe_allow_html=True)
 
 # ==========================================
-# TAB 2: REEL FEED & SIMULATOR
+# TAB 2: REEL FEED (INTERACTIVE VIDEO PLAYER)
 # ==========================================
 with tabs[1]:
-    st.subheader("📱 Short-Form Reel Interaction Simulator")
-    st.write("Browse fictional reels and simulate user viewing interactions (watch completion, likes, saves, skips).")
+    st.subheader("📱 Short-Form Reel Video Feed & Real-Time Simulator")
+    st.write("Experience Reels as an interactive vertical video player. Watch video clips, react with social signals, and observe how engagement is scored in real-time.")
 
-    for reel in reels_catalog:
-        with st.expander(f"🎬 {reel['title']} [{reel['category']}]", expanded=False):
-            c1, c2 = st.columns([2, 1])
-            with c1:
-                st.markdown(f"**Caption:** {reel.get('caption', '')}")
-                st.markdown(f"**Transcript:** *\"{reel.get('transcript', '')}\"*")
-                st.caption(f"Topic: `{reel.get('topic')}` | Difficulty: `{reel.get('difficulty')}` | Type: `{reel.get('content_type')}`")
-            with c2:
-                st.markdown("**Simulate Interaction:**")
-                wp = st.slider("Watch %", 0, 100, 90, key=f"wp_{reel['reel_id']}") / 100.0
-                b1, b2, b3 = st.columns(3)
-                liked = b1.checkbox("❤️ Like", key=f"lk_{reel['reel_id']}")
-                saved = b2.checkbox("🔖 Save", key=f"sv_{reel['reel_id']}")
-                skipped = b3.checkbox("⏭️ Skip", key=f"sk_{reel['reel_id']}")
+    # Current selected reel state in session_state
+    if "current_reel_idx" not in st.session_state:
+        st.session_state.current_reel_idx = 0
 
-                if st.button("Log Interaction", key=f"btn_{reel['reel_id']}", use_container_width=True):
-                    eng = services["behavior"].evaluate_interaction({
-                        "watch_percentage": wp, "liked": liked, "saved": saved,
-                        "shared": False, "rewatched": False, "skipped": skipped
-                    })
-                    services["dm"].record_interaction(
-                        user_id=active_user_id, reel_id=reel["reel_id"],
-                        watch_percentage=wp, liked=liked, saved=saved,
-                        shared=False, rewatched=False, skipped=skipped, engagement_score=eng
-                    )
-                    st.success(f"Logged! Engagement Score: {eng:.2f}")
-                    st.rerun()
+    total_reels = len(reels_catalog)
+    current_idx = st.session_state.current_reel_idx % total_reels
+    active_reel = reels_catalog[current_idx]
+
+    # Reel Navigation Header
+    nav_c1, nav_c2, nav_c3 = st.columns([1, 3, 1])
+    with nav_c1:
+        if st.button("⬅️ Prev Reel", use_container_width=True):
+            st.session_state.current_reel_idx = (current_idx - 1) % total_reels
+            st.rerun()
+    with nav_c2:
+        reel_titles = [f"{i+1}. {r['title']} [{r['category']}]" for i, r in enumerate(reels_catalog)]
+        selected_reel_title = st.selectbox("Select Reel", reel_titles, index=current_idx, label_visibility="collapsed")
+        new_idx = reel_titles.index(selected_reel_title)
+        if new_idx != current_idx:
+            st.session_state.current_reel_idx = new_idx
+            st.rerun()
+    with nav_c3:
+        if st.button("Next Reel ➡️", use_container_width=True):
+            st.session_state.current_reel_idx = (current_idx + 1) % total_reels
+            st.rerun()
+
+    st.markdown("---")
+
+    # Vertical Smartphone Reel Player Layout
+    col_video, col_actions = st.columns([3, 2])
+
+    with col_video:
+        st.markdown(f"""
+        <div style="background-color:#0F172A; border-radius:16px; padding:18px; color:white; box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.3);">
+            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:12px;">
+                <div>
+                    <span style="background-color:#2563EB; color:white; font-size:0.75rem; padding:4px 10px; border-radius:12px; font-weight:600;">{active_reel.get('category', 'Tech')}</span>
+                    <span style="background-color:#334155; color:#94A3B8; font-size:0.75rem; padding:4px 10px; border-radius:12px; margin-left:6px;">{active_reel.get('difficulty', 'Intermediate')}</span>
+                </div>
+                <span style="font-size:0.85rem; color:#94A3B8;">Reel {current_idx + 1} of {total_reels}</span>
+            </div>
+            <h3 style="color:#F8FAFC; margin:0 0 8px 0; font-size:1.3rem;">{active_reel['title']}</h3>
+            <p style="color:#CBD5E1; font-size:0.95rem; margin-bottom:14px;">{active_reel.get('caption', '')}</p>
+        </div>
+        """, unsafe_allow_html=True)
+
+        # Embedded Video Player
+        video_url = active_reel.get("video_url") or "https://assets.mixkit.co/videos/preview/mixkit-software-developer-working-on-code-42358-large.mp4"
+        st.video(video_url)
+
+        # Subtitles & Transcript Box
+        with st.expander("📝 Live Audio Transcript / Subtitles", expanded=True):
+            st.markdown(f"*\"{active_reel.get('transcript', '')}\"*")
+
+    with col_actions:
+        st.markdown("### 🎮 Interactive Reel Controls")
+        st.write("Simulate real user behavior on this video:")
+
+        # Interactive controls
+        wp = st.slider("⏱️ Video Watch Completion %", 0, 100, 95, key=f"feed_wp_{active_reel['reel_id']}") / 100.0
+        
+        c_act1, c_act2 = st.columns(2)
+        with c_act1:
+            lk = st.checkbox("❤️ Liked Video", value=True, key=f"feed_lk_{active_reel['reel_id']}")
+            sv = st.checkbox("🔖 Saved / Bookmarked", value=False, key=f"feed_sv_{active_reel['reel_id']}")
+        with c_act2:
+            rw = st.checkbox("🔄 Rewatched Loop", value=False, key=f"feed_rw_{active_reel['reel_id']}")
+            sk = st.checkbox("⏭️ Skipped Immediately", value=False, key=f"feed_sk_{active_reel['reel_id']}")
+
+        # Compute engagement score live
+        current_eng = services["behavior"].evaluate_interaction({
+            "watch_percentage": wp, "liked": lk, "saved": sv,
+            "shared": False, "rewatched": rw, "skipped": sk
+        })
+
+        st.markdown(f"""
+        <div style="background-color:#F1F5F9; border-radius:8px; padding:12px; margin:12px 0;">
+            <p style="margin:0; font-size:0.9rem; color:#475569;">Calculated Engagement Score:</p>
+            <h2 style="margin:4px 0 0 0; color:{'#16A34A' if current_eng >= 0.7 else ('#CA8A04' if current_eng >= 0.4 else '#DC2626')}; font-size:1.8rem;">
+                {current_eng:.2f} / 1.00
+            </h2>
+        </div>
+        """, unsafe_allow_html=True)
+
+        if st.button("🚀 Log This Video Interaction", type="primary", use_container_width=True):
+            services["dm"].record_interaction(
+                user_id=active_user_id,
+                reel_id=active_reel["reel_id"],
+                watch_percentage=wp,
+                liked=lk,
+                saved=sv,
+                shared=False,
+                rewatched=rw,
+                skipped=sk,
+                engagement_score=current_eng
+            )
+            st.success(f"Logged interaction for '{active_reel['title']}'! Profile updating in real-time.")
+            st.rerun()
+
+        st.markdown("---")
+        st.markdown("#### 📺 All Available Video Reels")
+        for i, r in enumerate(reels_catalog):
+            btn_label = f"{'▶️ [ACTIVE]' if i == current_idx else '🎬'} {r['title'][:32]}... ({r['category']})"
+            if st.button(btn_label, key=f"quick_pick_{r['reel_id']}", use_container_width=True):
+                st.session_state.current_reel_idx = i
+                st.rerun()
 
 # ==========================================
 # TAB 3: CONTENT ANALYSIS
