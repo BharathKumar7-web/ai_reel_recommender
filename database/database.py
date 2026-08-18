@@ -54,6 +54,12 @@ class Database:
                 )
             """)
 
+            # Migration: Ensure video_url exists if table was created previously
+            cursor.execute("PRAGMA table_info(reels)")
+            cols = [r["name"] for r in cursor.fetchall()]
+            if "video_url" not in cols and len(cols) > 0:
+                cursor.execute("ALTER TABLE reels ADD COLUMN video_url TEXT")
+
             # Interactions table
             cursor.execute("""
                 CREATE TABLE IF NOT EXISTS interactions (
