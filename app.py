@@ -283,9 +283,14 @@ with tabs[1]:
         </div>
         """, unsafe_allow_html=True)
 
-        # Embedded Video Player
-        video_url = active_reel.get("video_url") or "https://assets.mixkit.co/videos/preview/mixkit-software-developer-working-on-code-42358-large.mp4"
-        st.video(video_url)
+        # Embedded Video Player (Serves generated 20s MP4 video directly from disk)
+        local_video_path = os.path.join(CURRENT_DIR, "videos", f"{active_reel['reel_id']}.mp4")
+        if os.path.exists(local_video_path):
+            with open(local_video_path, "rb") as vf:
+                st.video(vf.read(), format="video/mp4", start_time=0)
+        else:
+            video_url = active_reel.get("video_url") or "https://assets.mixkit.co/videos/preview/mixkit-software-developer-working-on-code-42358-large.mp4"
+            st.video(video_url)
 
         # Subtitles & Transcript Box
         with st.expander("📝 Live Audio Transcript / Subtitles", expanded=True):
